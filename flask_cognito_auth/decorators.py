@@ -41,6 +41,17 @@ def login_handler(fn):
         return res
     return wrapper
 
+def is_logged_in(fn):
+    """
+    Checks if you are logged in or not
+    """
+
+    @wraps(fn)
+    def wrapper(*args, **kwargs):
+        if 'username' not in list(session.keys()) or session['username'] is None:
+            return redirect(url_for("login", next=request.url))
+        return fn(*args, **kwargs)
+    return wrapper
 
 def callback_handler(fn):
     """
@@ -121,6 +132,14 @@ def callback_handler(fn):
                 if not email and 'email' in id_token:
                     email = id_token["email"]
 
+                roles = None
+                if 'cognito:roles' in id_token:
+                    roles = id_token['cognito:roles']
+
+                preferred_role = None
+                if 'cognito:preferred_role' in id_token:
+                    preferred_role = id_token['cognito:preferred_role']
+
                 groups = None
                 if "cognito:groups" in id_token:
                     groups = id_token['cognito:groups']
@@ -128,9 +147,13 @@ def callback_handler(fn):
                 update_session(username=username,
                                id=id_token["sub"],
                                groups=groups,
+                               roles=roles,
+                               preferred_role=preferred_role,
                                email=email,
                                expires=id_token["exp"],
-                               refresh_token=response.json()["refresh_token"])
+                               refresh_token=response.json()["refresh_token"],
+                               id_token=response.json()["id_token"])
+
         if not auth_success:
             error_uri = config.redirect_error_uri
             if error_uri:
@@ -143,24 +166,30 @@ def callback_handler(fn):
     return wrapper
 
 
-def update_session(username: str, id, groups, email: str, expires, refresh_token):
+def update_session(username: str, id, groups, roles, preferred_role, email: str, expires, refresh_token, id_token):
     """
     Method to update the Flase Session object with the informations after
     successfull login.
-    :param username (str):      AWS Cognito authenticated user.
-    :param id (str):            ID of AWS Cognito authenticated user.
-    :param groups (list):       List of AWS Cognito groups if authenticated
-                                user is subscribed.
-    :param email (str):         AWS Cognito email if of authenticated user.
-    :param expires (str):       AWS Cognito session timeout.
-    :param refresh_token (str): JWT refresh token received in respose.
+    :param username (str):       AWS Cognito authenticated user.
+    :param id (str):             ID of AWS Cognito authenticated user.
+    :param groups (list):        List of AWS Cognito groups if authenticated
+                                 user is subscribed.
+    :param roles (list):         List of AWS Cognito roles from groups.
+    :param preferred_role (str): Preferred role if supplied.
+    :param email (str):          AWS Cognito email if of authenticated user.
+    :param expires (str):        AWS Cognito session timeout.
+    :param refresh_token (str):  JWT refresh token received in respose.
+    :param id_token (str):       JWT id token received in respose.
     """
     session['username'] = username
     session['id'] = id
     session['groups'] = groups
+    session['roles'] = roles
+    session['preferred_role'] = preferred_role
     session['email'] = email
     session['expires'] = expires
     session['refresh_token'] = refresh_token
+    session['id_token'] = id_token
 
 
 def verify(token: str, access_token: str = None):
@@ -205,6 +234,9 @@ def logout_handler(fn):
                        id=None,
                        groups=None,
                        email=None,
+                       roles=None,
+                       preferred_role=None,
+                       id_token=None,
                        expires=None,
                        refresh_token=None)
         logger.info(
