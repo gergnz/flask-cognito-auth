@@ -150,6 +150,7 @@ def callback_handler(fn):
                                roles=roles,
                                preferred_role=preferred_role,
                                email=email,
+                               data=id_token,
                                expires=id_token["exp"],
                                refresh_token=response.json()["refresh_token"],
                                id_token=response.json()["id_token"])
@@ -166,7 +167,7 @@ def callback_handler(fn):
     return wrapper
 
 
-def update_session(username: str, id, groups, roles, preferred_role, email: str, expires, refresh_token, id_token):
+def update_session(username: str, id, groups, roles, preferred_role, email: str, expires, data, refresh_token, id_token):
     """
     Method to update the Flase Session object with the informations after
     successfull login.
@@ -188,6 +189,7 @@ def update_session(username: str, id, groups, roles, preferred_role, email: str,
     session['preferred_role'] = preferred_role
     session['email'] = email
     session['expires'] = expires
+    session['data'] = data
     session['refresh_token'] = refresh_token
     session['id_token'] = id_token
 
