@@ -239,6 +239,7 @@ def logout_handler(fn):
                        roles=None,
                        preferred_role=None,
                        id_token=None,
+                       data=None,
                        expires=None,
                        refresh_token=None)
         logger.info(
