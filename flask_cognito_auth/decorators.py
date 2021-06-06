@@ -49,7 +49,8 @@ def is_logged_in(fn):
     @wraps(fn)
     def wrapper(*args, **kwargs):
         if 'username' not in list(session.keys()) or session['username'] is None:
-            return redirect(url_for("login", next=request.url))
+            session['redirect'] = request.url
+            return redirect(url_for("login"))
         return fn(*args, **kwargs)
     return wrapper
 
