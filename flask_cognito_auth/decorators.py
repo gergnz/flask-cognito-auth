@@ -150,8 +150,8 @@ def callback_handler(fn):
                                roles=roles,
                                preferred_role=preferred_role,
                                email=email,
-                               data=id_token,
                                expires=id_token["exp"],
+                               data=id_token,
                                refresh_token=response.json()["refresh_token"],
                                id_token=response.json()["id_token"])
 
@@ -169,7 +169,7 @@ def callback_handler(fn):
 
 def update_session(username: str, id, groups, roles, preferred_role, email: str, expires, data, refresh_token, id_token):
     """
-    Method to update the Flase Session object with the informations after
+    Method to update the Flask Session object with the informations after
     successfull login.
     :param username (str):       AWS Cognito authenticated user.
     :param id (str):             ID of AWS Cognito authenticated user.
@@ -179,6 +179,7 @@ def update_session(username: str, id, groups, roles, preferred_role, email: str,
     :param preferred_role (str): Preferred role if supplied.
     :param email (str):          AWS Cognito email if of authenticated user.
     :param expires (str):        AWS Cognito session timeout.
+    :param data (dict):          The verified data.
     :param refresh_token (str):  JWT refresh token received in respose.
     :param id_token (str):       JWT id token received in respose.
     """
@@ -192,6 +193,7 @@ def update_session(username: str, id, groups, roles, preferred_role, email: str,
     session['data'] = data
     session['refresh_token'] = refresh_token
     session['id_token'] = id_token
+    session.modified = True
 
 
 def verify(token: str, access_token: str = None):
