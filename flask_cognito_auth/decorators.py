@@ -226,6 +226,7 @@ def logout_handler(fn):
         * username
         * group (List of Cognito groups if any)
         * id
+        * data
         * email
         * expires
         * refresh_token
