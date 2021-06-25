@@ -65,7 +65,6 @@ def callback_handler(fn):
         * id
         * email
         * expires
-        * refresh_token
     Use this decorator on the redirect endpoint on your application.
     """
     @wraps(fn)
@@ -148,13 +147,13 @@ def callback_handler(fn):
                 update_session(username=username,
                                id=id_token["sub"],
                                groups=groups,
+                               email=email,
                                roles=roles,
                                preferred_role=preferred_role,
-                               email=email,
-                               expires=id_token["exp"],
                                data=id_token,
-                               refresh_token=response.json()["refresh_token"],
-                               id_token=response.json()["id_token"])
+                               expires=id_token["exp"],
+                               id_token=response.json()["id_token"],
+                               access_token=response.json()["access_token"])
 
         if not auth_success:
             error_uri = config.redirect_error_uri
@@ -168,7 +167,7 @@ def callback_handler(fn):
     return wrapper
 
 
-def update_session(username: str, id, groups, roles, preferred_role, email: str, expires, data, refresh_token, id_token):
+def update_session(username: str, id, groups, email: str, roles, preferred_role, data, expires, id_token, access_token):
     """
     Method to update the Flask Session object with the informations after
     successfull login.
@@ -176,24 +175,24 @@ def update_session(username: str, id, groups, roles, preferred_role, email: str,
     :param id (str):             ID of AWS Cognito authenticated user.
     :param groups (list):        List of AWS Cognito groups if authenticated
                                  user is subscribed.
+    :param email (str):          AWS Cognito email if of authenticated user.
     :param roles (list):         List of AWS Cognito roles from groups.
     :param preferred_role (str): Preferred role if supplied.
-    :param email (str):          AWS Cognito email if of authenticated user.
-    :param expires (str):        AWS Cognito session timeout.
     :param data (dict):          The verified data.
-    :param refresh_token (str):  JWT refresh token received in respose.
+    :param expires (str):        AWS Cognito session timeout.
     :param id_token (str):       JWT id token received in respose.
+    :param access_token (str):   JWT access token received in response.
     """
     session['username'] = username
     session['id'] = id
     session['groups'] = groups
+    session['email'] = email
     session['roles'] = roles
     session['preferred_role'] = preferred_role
-    session['email'] = email
-    session['expires'] = expires
     session['data'] = data
-    session['refresh_token'] = refresh_token
+    session['expires'] = expires
     session['id_token'] = id_token
+    session['access_token'] = access_token
     session.modified = True
 
 
@@ -227,12 +226,15 @@ def logout_handler(fn):
     This decorator also clears the basic informations from Flask session.
     Basic informations are:
         * username
-        * group (List of Cognito groups if any)
         * id
-        * data
+        * groups (List of Cognito groups if any)
         * email
+        * roles
+        * preferred_role
+        * data
         * expires
-        * refresh_token
+        * id_token
+        * access_token
     """
     @wraps(fn)
     def wrapper(*args, **kwargs):
@@ -242,10 +244,10 @@ def logout_handler(fn):
                        email=None,
                        roles=None,
                        preferred_role=None,
-                       id_token=None,
                        data=None,
                        expires=None,
-                       refresh_token=None)
+                       id_token=None,
+                       access_token=None)
         logger.info(
             "AWS Cognito Login, redirecting to AWS Cognito for logout and terminating sessions")
 
