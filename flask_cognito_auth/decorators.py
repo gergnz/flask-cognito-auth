@@ -140,7 +140,7 @@ def callback_handler(fn):
                 if 'cognito:preferred_role' in id_token:
                     preferred_role = id_token['cognito:preferred_role']
 
-                groups = None
+                groups = []
                 if "cognito:groups" in id_token:
                     groups = id_token['cognito:groups']
 
